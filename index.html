@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GYM TRACKER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #161616; --surface2: #1e1e1e;
+    --border: #2a2a2a; --accent: #c8f135; --accent2: #ff4d4d;
+    --text: #f0f0f0; --muted: #666; --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--accent); flex-shrink: 0; }
+
+  .week-selector { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
+  .week-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0;
+  }
+  .week-btn:active { background: var(--accent); color: #000; }
+  .week-label { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; min-width: 70px; text-align: center; cursor: pointer; }
+  .week-label:hover { color: var(--accent); }
+
+  /* WEEK SEARCH MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.8); align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; width: 88%; max-width: 340px;
+  }
+  .modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); margin-bottom: 16px; letter-spacing: 1px; }
+  .modal input[type=number] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 20px; text-align: center;
+    outline: none; margin-bottom: 16px;
+    -moz-appearance: textfield;
+  }
+  .modal input[type=number]::-webkit-inner-spin-button,
+  .modal input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .modal input[type=number]:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1; padding: 12px; border-radius: 8px; border: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .modal-btns button:active { opacity: 0.7; }
+  .btn-cancel { background: var(--surface2); color: var(--muted); }
+  .btn-go { background: var(--accent); color: #000; }
+
+  /* TEMPLATE MODAL */
+  .tpl-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; width: 92%; max-width: 420px;
+    max-height: 80vh; overflow-y: auto;
+  }
+  .tpl-modal h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); margin-bottom: 4px; letter-spacing: 1px; }
+  .tpl-modal p { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .tpl-day-block { margin-bottom: 16px; }
+  .tpl-day-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--text); letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .tpl-ex-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tpl-ex-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--accent); min-width: 20px; }
+  .tpl-ex-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  }
+  .tpl-ex-input:focus { border-color: var(--accent); }
+  .tpl-ex-input::placeholder { color: var(--muted); }
+  .tpl-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .tpl-actions button {
+    width: 100%; padding: 12px; border-radius: 8px; border: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .tpl-actions button:active { opacity: 0.7; }
+  .btn-save-tpl { background: var(--accent); color: #000; }
+  .btn-load-tpl { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+  .btn-close-tpl { background: transparent; color: var(--muted); }
+
+  /* TEMPLATE ICON */
+  .tpl-icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 20px; padding: 4px; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .tpl-icon-btn:active { color: var(--accent); }
+
+  /* DAY TABS */
+  .day-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg); position: sticky; top: 57px; z-index: 99;
+  }
+  .day-tab {
+    flex: 1; padding: 12px 8px; text-align: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 3px solid transparent; transition: all 0.15s;
+  }
+  .day-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* EXERCISE CARD */
+  .ex-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .ex-card:focus-within { border-color: var(--accent); }
+  .ex-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .ex-num { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); min-width: 28px; }
+  .ex-name {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    color: var(--text); padding: 2px 0;
+  }
+  .ex-name::placeholder { color: var(--muted); }
+  .ex-del { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 2px 4px; line-height: 1; }
+  .ex-del:active { color: var(--accent2); }
+
+  .series-header { display: grid; grid-template-columns: 36px 1fr 1fr 2fr; padding: 6px 12px; gap: 8px; }
+  .series-header span { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; text-align: center; }
+  .series-header span:last-child { text-align: left; }
+
+  .serie-row {
+    display: grid; grid-template-columns: 36px 1fr 1fr 2fr;
+    padding: 6px 12px; gap: 8px; align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .serie-badge {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--accent);
+  }
+  .serie-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text); width: 100%; text-align: center; outline: none;
+    transition: border-color 0.15s; -moz-appearance: textfield;
+  }
+  .serie-input::-webkit-inner-spin-button, .serie-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .serie-input:focus { border-color: var(--accent); }
+  .serie-input::placeholder { color: var(--muted); font-size: 12px; }
+  .serie-notes {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--text); width: 100%; outline: none; transition: border-color 0.15s;
+  }
+  .serie-notes:focus { border-color: var(--accent); }
+  .serie-notes::placeholder { color: var(--muted); font-size: 12px; }
+
+  .add-btn {
+    width: 100%; padding: 12px;
+    background: transparent; border: 1px dashed var(--border);
+    border-radius: var(--radius); color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; margin-bottom: 16px; transition: all 0.15s;
+  }
+  .add-btn:active { background: var(--surface); color: var(--text); border-color: var(--accent); }
+
+  .notes-block { margin-bottom: 16px; }
+  .notes-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: block; }
+  .day-notes {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    resize: none; min-height: 70px; outline: none; transition: border-color 0.15s;
+  }
+  .day-notes:focus { border-color: var(--accent); }
+
+  .save-btn {
+    width: 100%; padding: 16px; background: var(--accent); border: none;
+    border-radius: var(--radius); font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 2px; color: #000; cursor: pointer;
+    margin-bottom: 32px; transition: opacity 0.15s, transform 0.1s;
+  }
+  .save-btn:active { transform: scale(0.98); opacity: 0.85; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--accent); color: #000;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px;
+    padding: 12px 24px; border-radius: 40px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .day-panel { display: none; }
+  .day-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">💪 GYM</div>
+  <div class="week-selector">
+    <button class="week-btn" onclick="changeWeek(-1)">‹</button>
+    <div class="week-label" id="week-label" onclick="openWeekModal()" title="Toca para ir a una semana">SEM 1</div>
+    <button class="week-btn" onclick="changeWeek(1)">›</button>
+  </div>
+  <button class="tpl-icon-btn" onclick="openTplModal()" title="Plantilla de rutina">📋</button>
+</header>
+
+<div class="day-tabs">
+  <div class="day-tab active" onclick="switchDay(0)">DÍA 1</div>
+  <div class="day-tab" onclick="switchDay(1)">DÍA 2</div>
+  <div class="day-tab" onclick="switchDay(2)">DÍA 3</div>
+</div>
+
+<main>
+  <div id="panel-0" class="day-panel active"></div>
+  <div id="panel-1" class="day-panel"></div>
+  <div id="panel-2" class="day-panel"></div>
+</main>
+
+<!-- WEEK MODAL -->
+<div class="modal-overlay" id="week-modal">
+  <div class="modal">
+    <h3>IR A SEMANA</h3>
+    <input type="number" id="week-input" min="1" max="999" placeholder="Nº semana">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeWeekModal()">CANCELAR</button>
+      <button class="btn-go" onclick="goToWeek()">IR</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-overlay" id="tpl-modal">
+  <div class="tpl-modal">
+    <h3>📋 PLANTILLA DE RUTINA</h3>
+    <p>Define los ejercicios de cada día. Luego cárgala en cualquier semana.</p>
+    <div id="tpl-body"></div>
+    <div class="tpl-actions">
+      <button class="btn-save-tpl" onclick="saveTemplate()">💾 GUARDAR PLANTILLA</button>
+      <button class="btn-load-tpl" onclick="loadTemplate()">📂 CARGAR EN SEMANA ACTUAL</button>
+      <button class="btn-close-tpl" onclick="closeTplModal()">CERRAR</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ GUARDADO</div>
+
+<script>
+let week = 1, day = 0;
+const NUM_DAYS = 3, NUM_EX = 6;
+
+function storageKey(w, d) { return `gym_v3_w${w}_d${d}`; }
+function tplKey() { return 'gym_v3_template'; }
+
+function defaultData() {
+  return {
+    exercises: Array.from({length: NUM_EX}, () => ({
+      name: '', series: [{reps:'',weight:'',notes:''},{reps:'',weight:'',notes:''}]
+    })),
+    notes: ''
+  };
+}
+
+function load(w, d) {
+  try { const r = localStorage.getItem(storageKey(w,d)); if (r) return JSON.parse(r); } catch(e) {}
+  return defaultData();
+}
+function save(w, d, data) {
+  try { localStorage.setItem(storageKey(w,d), JSON.stringify(data)); } catch(e) {}
+}
+
+function collectDay(dayIdx) {
+  const panel = document.getElementById('panel-' + dayIdx);
+  const exercises = [];
+  panel.querySelectorAll('.ex-card').forEach(card => {
+    const name = card.querySelector('.ex-name').value;
+    const series = [];
+    card.querySelectorAll('.serie-row').forEach(row => {
+      series.push({
+        reps: row.querySelector('[data-f="reps"]').value,
+        weight: row.querySelector('[data-f="weight"]').value,
+        notes: row.querySelector('[data-f="notes"]').value,
+      });
+    });
+    exercises.push({ name, series });
+  });
+  const notes = (panel.querySelector('.day-notes')||{}).value || '';
+  return { exercises, notes };
+}
+
+function renderDay(dayIdx) {
+  const data = load(week, dayIdx);
+  const panel = document.getElementById('panel-' + dayIdx);
+  panel.innerHTML = '';
+  data.exercises.forEach((ex, i) => appendExCard(panel, ex, i));
+  appendAddBtn(panel, dayIdx);
+
+  const nb = document.createElement('div');
+  nb.className = 'notes-block';
+  nb.innerHTML = `<span class="notes-label">Notas del día</span>`;
+  const ta = document.createElement('textarea');
+  ta.className = 'day-notes'; ta.placeholder = 'Sensaciones, incidencias...';
+  ta.value = data.notes || ''; ta.rows = 3;
+  nb.appendChild(ta); panel.appendChild(nb);
+
+  const btn = document.createElement('button');
+  btn.className = 'save-btn'; btn.textContent = 'GUARDAR';
+  btn.onclick = () => {
+    for (let d = 0; d < NUM_DAYS; d++) save(week, d, collectDay(d));
+    showToast();
+  };
+  panel.appendChild(btn);
+}
+
+function appendExCard(panel, ex, idx) {
+  const card = document.createElement('div');
+  card.className = 'ex-card';
+  const hdr = document.createElement('div');
+  hdr.className = 'ex-header';
+  hdr.innerHTML = `
+    <span class="ex-num">${idx+1}</span>
+    <input class="ex-name" type="text" placeholder="Nombre del ejercicio" value="${esc(ex.name)}">
+    <button class="ex-del">×</button>`;
+  hdr.querySelector('.ex-del').onclick = () => { card.remove(); rebuildNums(panel); };
+  card.appendChild(hdr);
+
+  const sh = document.createElement('div');
+  sh.className = 'series-header';
+  sh.innerHTML = `<span></span><span>Reps</span><span>Kg</span><span>Notas</span>`;
+  card.appendChild(sh);
+
+  ex.series.forEach((s, si) => {
+    const row = document.createElement('div');
+    row.className = 'serie-row';
+    row.innerHTML = `
+      <div class="serie-badge">${si+1}</div>
+      <input class="serie-input" type="number" inputmode="decimal" placeholder="—" value="${esc(s.reps)}" data-f="reps">
+      <input class="serie-input" type="number" inputmode="decimal" step="0.5" placeholder="—" value="${esc(s.weight)}" data-f="weight">
+      <input class="serie-notes" type="text" placeholder="Notas…" value="${esc(s.notes)}" data-f="notes">`;
+    card.appendChild(row);
+  });
+  panel.appendChild(card);
+}
+
+function appendAddBtn(panel, dayIdx) {
+  const btn = document.createElement('button');
+  btn.className = 'add-btn'; btn.textContent = '+ Añadir ejercicio';
+  btn.onclick = () => {
+    const data = collectDay(dayIdx);
+    data.exercises.push({name:'', series:[{reps:'',weight:'',notes:''},{reps:'',weight:'',notes:''}]});
+    save(week, dayIdx, data);
+    renderDay(dayIdx);
+    document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===day));
+  };
+  panel.appendChild(btn);
+}
+
+function rebuildNums(panel) {
+  panel.querySelectorAll('.ex-num').forEach((el,i) => el.textContent = i+1);
+}
+
+function esc(s) {
+  if (!s && s !== 0) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// NAVIGATION
+function switchDay(idx) {
+  for (let d = 0; d < NUM_DAYS; d++) save(week, d, collectDay(d));
+  day = idx;
+  document.querySelectorAll('.day-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+  renderDay(idx);
+}
+
+function changeWeek(delta) {
+  for (let d = 0; d < NUM_DAYS; d++) save(week, d, collectDay(d));
+  week = Math.max(1, week + delta);
+  document.getElementById('week-label').textContent = `SEM ${week}`;
+  for (let d = 0; d < NUM_DAYS; d++) renderDay(d);
+  document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===day));
+}
+
+// WEEK MODAL
+function openWeekModal() {
+  document.getElementById('week-input').value = week;
+  document.getElementById('week-modal').classList.add('open');
+  setTimeout(() => document.getElementById('week-input').focus(), 100);
+}
+function closeWeekModal() { document.getElementById('week-modal').classList.remove('open'); }
+function goToWeek() {
+  const val = parseInt(document.getElementById('week-input').value);
+  if (!val || val < 1) return;
+  closeWeekModal();
+  for (let d = 0; d < NUM_DAYS; d++) save(week, d, collectDay(d));
+  week = val;
+  document.getElementById('week-label').textContent = `SEM ${week}`;
+  for (let d = 0; d < NUM_DAYS; d++) renderDay(d);
+  document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===day));
+}
+document.getElementById('week-input') && document.getElementById('week-input').addEventListener('keydown', e => { if(e.key==='Enter') goToWeek(); });
+
+// TEMPLATE MODAL
+function openTplModal() {
+  renderTplBody();
+  document.getElementById('tpl-modal').classList.add('open');
+}
+function closeTplModal() { document.getElementById('tpl-modal').classList.remove('open'); }
+
+function renderTplBody() {
+  let tpl;
+  try { const r = localStorage.getItem(tplKey()); tpl = r ? JSON.parse(r) : null; } catch(e) {}
+  if (!tpl) tpl = Array.from({length:NUM_DAYS}, () => Array.from({length:NUM_EX}, () => ''));
+
+  const body = document.getElementById('tpl-body');
+  body.innerHTML = '';
+  tpl.forEach((dayExs, di) => {
+    const block = document.createElement('div');
+    block.className = 'tpl-day-block';
+    block.innerHTML = `<div class="tpl-day-title">DÍA ${di+1}</div>`;
+    dayExs.forEach((name, ei) => {
+      const row = document.createElement('div');
+      row.className = 'tpl-ex-row';
+      row.innerHTML = `
+        <span class="tpl-ex-num">${ei+1}</span>
+        <input class="tpl-ex-input" type="text" placeholder="Ejercicio ${ei+1}" value="${esc(name)}" data-day="${di}" data-ex="${ei}">`;
+      block.appendChild(row);
+    });
+    body.appendChild(block);
+  });
+}
+
+function saveTemplate() {
+  const tpl = Array.from({length:NUM_DAYS}, () => Array(NUM_EX).fill(''));
+  document.querySelectorAll('.tpl-ex-input').forEach(inp => {
+    tpl[inp.dataset.day][inp.dataset.ex] = inp.value;
+  });
+  try { localStorage.setItem(tplKey(), JSON.stringify(tpl)); } catch(e) {}
+  showToast('✓ PLANTILLA GUARDADA');
+}
+
+function loadTemplate() {
+  let tpl;
+  try { const r = localStorage.getItem(tplKey()); tpl = r ? JSON.parse(r) : null; } catch(e) {}
+  if (!tpl) { showToast('⚠ SIN PLANTILLA'); return; }
+
+  for (let d = 0; d < NUM_DAYS; d++) {
+    const current = load(week, d);
+    tpl[d].forEach((name, ei) => {
+      if (ei < current.exercises.length && name) {
+        current.exercises[ei].name = name;
+      }
+    });
+    save(week, d, current);
+  }
+  for (let d = 0; d < NUM_DAYS; d++) renderDay(d);
+  document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===day));
+  closeTplModal();
+  showToast('✓ PLANTILLA CARGADA');
+}
+
+// TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || '✓ GUARDADO';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// CLOSE MODALS ON OVERLAY CLICK
+document.getElementById('week-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeWeekModal(); });
+document.getElementById('tpl-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeTplModal(); });
+
+// INIT
+for (let d = 0; d < NUM_DAYS; d++) renderDay(d);
+document.querySelectorAll('.day-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+</script>
+</body>
+</html>
